@@ -133,7 +133,7 @@ public class AbstractWagonTest
         connectionSemaphoreControl.setDefaultReturnValue( true );
         connectionSemaphoreControl.replay();
 
-        wagon.setConnectionSemaphore( connectionSemaphore );
+//        wagon.setConnectionSemaphore( connectionSemaphore );
 
     }
 
@@ -322,7 +322,7 @@ public class AbstractWagonTest
         };
         wagon.addSessionListener( sessionListener );
 
-        ((TestWagon) wagon).setConnectionSemaphore( connectionSemaphore );
+//        ((TestWagon) wagon).setConnectionSemaphore( connectionSemaphore );
 
         try
         {
@@ -426,7 +426,7 @@ public class AbstractWagonTest
 
             WagonMock wagon = new WagonMock( true );
 
-            wagon.setConnectionSemaphore( connectionSemaphore );
+//            wagon.setConnectionSemaphore( connectionSemaphore );
 
             wagon.addTransferListener( transferListener );
 
