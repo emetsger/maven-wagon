@@ -42,7 +42,12 @@ import org.apache.maven.wagon.proxy.ProxyUtils;
 import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.repository.RepositoryPermissions;
 import org.apache.maven.wagon.resource.Resource;
+import org.apache.maven.wagon.throttle.ConnectionSemaphoreFactory;
+import org.apache.maven.wagon.throttle.DefaultConnectionSemaphoreFactory;
+import org.apache.maven.wagon.throttle.DefaultResettableConnectionSemaphore;
+import org.apache.maven.wagon.throttle.ResettableConnectionSemaphore;
 import org.codehaus.plexus.util.IOUtil;
+import sun.security.provider.SystemIdentity;
 
 /**
  * Implementation of common facilities for Wagon providers.
@@ -62,6 +67,19 @@ public abstract class AbstractWagon
     protected TransferEventSupport transferEventSupport = new TransferEventSupport();
 
     protected AuthenticationInfo authenticationInfo;
+
+//    /**
+//     * @plexus.requirement role="org.apache.maven.wagon.throttle.ConnectionSemaphore" role-hint="resettable"
+//     */
+//    static protected ResettableConnectionSemaphore connectionSemaphore =
+//            new DefaultResettableConnectionSemaphore( 10, 5000 );
+
+    protected ConnectionSemaphoreFactory semaphoreFactory = new DefaultConnectionSemaphoreFactory(
+            Integer.parseInt(
+                            System.getProperty( "org.apache.maven.wagon.Wagon.connectionPermitsSize", "-1" ) ),
+                    Integer.parseInt(
+                            System.getProperty( "org.apache.maven.wagon.Wagon.connectionPermitsResetInterval", "-1" )
+                    ) );
 
     protected boolean interactive = true;
     
@@ -102,6 +120,11 @@ public abstract class AbstractWagon
     {
         try
         {
+            if ( !semaphoreFactory.getInstance().acquire( getTimeout() ) )
+            {
+                throw new ConnectionException(
+                        "Unable to acquire a connection permit after waiting " + getTimeout() + " ms" );
+            }
             openConnectionInternal();
         }
         catch ( ConnectionException e )
@@ -855,4 +878,17 @@ public abstract class AbstractWagon
     {
         this.permissionsOverride = permissionsOverride;
     }
+//
+//    public synchronized ResettableConnectionSemaphore getConnectionSemaphore()
+//    {
+//        return connectionSemaphore;
+//    }
+//
+//    public synchronized void setConnectionSemaphore( ResettableConnectionSemaphore connectionSemaphore )
+//    {
+//        System.err.println( Integer.toHexString( System.identityHashCode( this ) ) + ": Setting connection semaphore: "
+//                + connectionSemaphore + " (" + Integer.toHexString(
+//                System.identityHashCode( connectionSemaphore ) ) + ")" );
+//        this.connectionSemaphore = connectionSemaphore;
+//    }
 }

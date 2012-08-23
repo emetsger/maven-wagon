@@ -38,6 +38,7 @@ import org.apache.maven.wagon.proxy.ProxyInfoProvider;
 import org.apache.maven.wagon.repository.Repository;
 import org.apache.maven.wagon.repository.RepositoryPermissions;
 import org.apache.maven.wagon.resource.Resource;
+import org.apache.maven.wagon.throttle.ResettableConnectionSemaphore;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.easymock.AbstractMatcher;
@@ -94,9 +95,13 @@ public class AbstractWagonTest
 
     private TransferListener transferListener = null;
 
+    private ResettableConnectionSemaphore connectionSemaphore = null;
+
     private MockControl transferListenerControl;
 
     private MockControl sessionListenerControl;
+
+    private MockControl connectionSemaphoreControl;
 
     protected void setUp()
         throws Exception
@@ -120,6 +125,15 @@ public class AbstractWagonTest
         transferListener = (TransferListener) transferListenerControl.getMock();
 
         wagon.addTransferListener( transferListener );
+
+        connectionSemaphoreControl = MockControl.createControl( ResettableConnectionSemaphore.class );
+        connectionSemaphore = (ResettableConnectionSemaphore) connectionSemaphoreControl.getMock();
+        connectionSemaphoreControl.setDefaultMatcher( MockControl.ALWAYS_MATCHER );
+        connectionSemaphore.acquire( -1 );
+        connectionSemaphoreControl.setDefaultReturnValue( true );
+        connectionSemaphoreControl.replay();
+
+        wagon.setConnectionSemaphore( connectionSemaphore );
 
     }
 
@@ -308,6 +322,8 @@ public class AbstractWagonTest
         };
         wagon.addSessionListener( sessionListener );
 
+        ((TestWagon) wagon).setConnectionSemaphore( connectionSemaphore );
+
         try
         {
             wagon.connect( repository );
@@ -409,6 +425,8 @@ public class AbstractWagonTest
             Repository repository = new Repository();
 
             WagonMock wagon = new WagonMock( true );
+
+            wagon.setConnectionSemaphore( connectionSemaphore );
 
             wagon.addTransferListener( transferListener );
 

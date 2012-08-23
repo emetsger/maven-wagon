@@ -78,6 +78,8 @@ public class StreamWagonTest
             }
         };
 
+
+
         MockControl control = MockControl.createControl( TransferListener.class );
         TransferListener listener = (TransferListener) control.getMock();
         listener.transferInitiated( null );
